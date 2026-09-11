@@ -15,7 +15,13 @@ SRC = src/main.c \
       src/parser/parser_utils.c \
       src/parser/validate_map.c \
       src/parser/flood_fill.c \
-      src/utils/cleanup.c
+      src/utils/cleanup.c	\
+	  src/raycast/vectors.c \
+	  src/render/init_mlx.c	\
+	  src/render/pixel_put.c \
+	  src/render/load_textures.c \
+	  src/movement/keypress_move.c \
+	  src/movement/move.c
 
 OBJ_DIR = obj
 OBJ = $(addprefix $(OBJ_DIR)/, $(SRC:.c=.o))
@@ -31,7 +37,7 @@ $(MLX):
 	@make -C $(MLX_DIR)
 
 $(NAME): $(LIBFT) $(MLX) $(OBJ)
-	@$(CC) $(CFLAGS) $(OBJ) $(LFLAGS) -o $(NAME)
+	@$(CC) -no-pie $(CFLAGS) $(OBJ) $(LFLAGS) -o $(NAME)
 	@echo "Done Making $(NAME)"
 
 $(OBJ_DIR)/%.o: %.c

@@ -12,6 +12,14 @@
 
 #include "cub3d.h"
 
+int	close_game(t_game *game)
+{
+	cleanup_game(game);
+	mlx_destroy_image(game->mlx, game->screen.ptr);
+	mlx_destroy_window(game->mlx, game->win);
+	exit(0);
+}
+
 void	error_exit(char *msg)
 {
 	ft_putstr_fd("Error\n", 2);

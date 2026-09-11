@@ -17,11 +17,11 @@ static char	**duplicate_map(t_game *game)
 	char	**temp;
 	int		y;
 
-	temp = malloc(sizeof(char *) * (game->map.height + 1));
+	temp = malloc(sizeof(char *) * (game->map.h + 1));
 	if (!temp)
 		error_exit_game(game, "Memory allocation failed in flood fill.");
 	y = 0;
-	while (y < game->map.height)
+	while (y < game->map.h)
 	{
 		temp[y] = ft_strdup(game->map.grid[y]);
 		if (!temp[y])
@@ -66,15 +66,15 @@ void	check_map_enclosure(t_game *game)
 	temp = duplicate_map(game);
 	leak = 0;
 	y = 0;
-	while (y < game->map.height)
+	while (y < game->map.h)
 	{
 		x = 0;
-		while (x < game->map.width)
+		while (x < game->map.w)
 		{
 			if (temp[y][x] == '0' || temp[y][x] == 'N' || temp[y][x] == 'S'
 				|| temp[y][x] == 'E' || temp[y][x] == 'W')
 			{
-				flood_check(temp, x, y, game->map.height, game->map.width, &leak);
+				flood_check(temp, x, y, game->map.h, game->map.w, &leak);
 				if (leak)
 				{
 					free_map(temp);

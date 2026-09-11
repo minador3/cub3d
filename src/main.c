@@ -10,7 +10,10 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "cub3d.h"
+#include "../include/cub3d.h"
+#include <unistd.h>
+#include <stdio.h>
+
 
 int	main(int argc, char **argv)
 {
@@ -23,12 +26,12 @@ int	main(int argc, char **argv)
 	}
 	ft_memset(&game, 0, sizeof(t_game));
 	parse_cub_file(&game, argv[1]);
-	printf("Map parsed and validated successfully!\n");
-	printf("Map size: %d x %d\n", game.map.w, game.map.h);
-	printf("Player position: (%.2f, %.2f) facing '%c'\n",
-		game.player.x, game.player.y, game.player.spawn_dir);
-	printf("Ceiling color: #%06X, Floor color: #%06X\n",
-		game.map.ceil_hex, game.map.floor_hex);
-	cleanup_game(&game);
+	init_window(&game);
+	load_all_textures(&game);
+	mlx_loop_hook(game.mlx, game_loop, &game);
+	mlx_hook(game.win, 2, 1L << 0, handle_keypress, &game);
+	mlx_hook(game.win, 3, 1L << 1, handle_keyrelease, &game);
+	mlx_hook(game.win, 17, 1L << 17, close_game, &game);
+	mlx_loop(game.mlx);
 	return (0);
 }

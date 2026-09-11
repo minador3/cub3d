@@ -14,6 +14,7 @@
 # define CUB3D_H
 
 # include "../libft/libft.h"
+# include "../minilibx-linux/mlx.h"
 # include <fcntl.h>
 # include <stdio.h>
 # include <stdlib.h>
@@ -22,6 +23,8 @@
 
 # define SUCCESS 0
 # define FAILURE 1
+# define MOVE_SPEED 0.05
+# define ROTATE_SPEED 0.03
 
 typedef struct s_img
 {
@@ -70,6 +73,42 @@ typedef struct s_player
 	char	spawn_dir;
 }			t_player;
 
+typedef struct s_ray
+{
+	double	ray_dir_x;
+	double	ray_dir_y;
+	int		map_x;
+	int		map_y;
+	double	delta_dist_x;
+	double	delta_dist_y;
+	double	side_dist_x;
+	double	side_dist_y;
+	int		step_x;
+	int		step_y;
+	int		side;
+}			t_ray;
+
+typedef struct s_wall
+{
+	double	perp_wall_dist;
+	int		line_height;
+	int		draw_start;
+	int		draw_end;
+	double	wall_x;
+	double	tex_x;
+	double	tex_y;
+}			t_wall;
+
+typedef struct s_keys
+{
+	int	w;
+	int	a;
+	int	s;
+	int	d;
+	int	left;
+	int	right;
+}			t_keys;
+
 typedef struct s_game
 {
 	void		*mlx;
@@ -78,6 +117,7 @@ typedef struct s_game
 	t_tex		tex;
 	t_player	player;
 	t_img		screen;
+	t_keys		keys;
 }				t_game;
 
 /* Cleanup and Errors */
@@ -98,5 +138,32 @@ void	check_map_enclosure(t_game *game);
 int		is_empty_line(char *line);
 char	*skip_spaces(char *str);
 void	consume_file(int fd);
+
+void	init_dda(t_player *player, t_ray *ray);
+void	dda_loop(t_ray *ray, char **grid);
+void	calc_wall_height(t_ray *ray, t_wall *wall, int screen_height);
+
+void	init_window(t_game *game);
+void	my_mlx_pixel_put(t_img *img, int x, int y, int colour);
+void	paint_ceiling_floor(t_game *game);
+void	render_walls(t_game *game);
+void	paint_wall_column(t_game *game, int x, t_ray *ray, t_wall *wall);
+t_img	*select_texture(t_ray *ray, t_tex *tex);
+
+void	load_one_texture(t_game *game, char *path, t_img *tex_img);
+void    load_all_textures(t_game *game);
+int	game_loop(t_game *game);
+
+int	close_game(t_game *game);
+void	move_forward(t_game *game, double speed);
+void	move_backward(t_game *game, double speed);
+void	strafe_right(t_game *game, double speed);
+void	strafe_left(t_game *game, double speed);
+void	rotate_player(t_game *game, double theta);
+
+int	handle_keypress(int keycode, t_game *game);
+int	handle_keyrelease(int keycode, t_game *game);
+void	process_movement(t_game *game);
+
 
 #endif
