@@ -6,7 +6,7 @@
 /*   By: mwei <mwei@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/20 17:16:10 by mwei              #+#    #+#             */
-/*   Updated: 2026/08/20 17:16:10 by mwei             ###   ########.fr       */
+/*   Updated: 2026/09/14 16:30:00 by mwei             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,25 +30,32 @@ static int	check_extension(char *path, char *ext)
 	int	len;
 	int	ext_len;
 
+	if (!path || !ext)
+		return (0);
 	len = ft_strlen(path);
 	ext_len = ft_strlen(ext);
-	if (len < ext_len)
+	if (len <= ext_len)
+		return (0);
+	if (path[len - ext_len - 1] == '/')
 		return (0);
 	return (ft_strncmp(path + len - ext_len, ext, ext_len) == 0);
 }
 
-void	parse_cub_file(t_game *game, char *path)
+int	is_config_complete(t_game *game)
 {
-	int		fd;
+	return (game->tex.no_path != NULL
+		&& game->tex.so_path != NULL
+		&& game->tex.we_path != NULL
+		&& game->tex.ea_path != NULL
+		&& game->map.has_floor
+		&& game->map.has_ceil);
+}
+
+static char	*read_config(t_game *game, int fd)
+{
 	char	*line;
 	int		res;
 
-	if (!check_extension(path, ".cub"))
-		error_exit("File extension must be .cub");
-	init_parser_vars(game);
-	fd = open(path, O_RDONLY);
-	if (fd < 0)
-		error_exit("Failed to open file.");
 	line = get_next_line(fd);
 	while (line && !is_config_complete(game))
 	{
@@ -69,6 +76,21 @@ void	parse_cub_file(t_game *game, char *path)
 		close(fd);
 		error_exit_game(game, "Incomplete configuration in file.");
 	}
+	return (line);
+}
+
+void	parse_cub_file(t_game *game, char *path)
+{
+	int		fd;
+	char	*line;
+
+	if (!check_extension(path, ".cub"))
+		error_exit("File extension must be .cub");
+	init_parser_vars(game);
+	fd = open(path, O_RDONLY);
+	if (fd < 0)
+		error_exit("Failed to open file.");
+	line = read_config(game, fd);
 	while (line && is_empty_line(line))
 	{
 		free(line);
@@ -76,7 +98,6 @@ void	parse_cub_file(t_game *game, char *path)
 	}
 	if (!line)
 	{
-		consume_file(fd);
 		close(fd);
 		error_exit_game(game, "No map found in file.");
 	}

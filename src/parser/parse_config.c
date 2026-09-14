@@ -6,27 +6,11 @@
 /*   By: mwei <mwei@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/20 17:15:30 by mwei              #+#    #+#             */
-/*   Updated: 2026/08/20 17:21:00 by mwei             ###   ########.fr       */
+/*   Updated: 2026/09/14 16:30:00 by mwei             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "cub3d.h"
-
-static int	count_commas(char *str)
-{
-	int	count;
-	int	i;
-
-	count = 0;
-	i = 0;
-	while (str[i])
-	{
-		if (str[i] == ',')
-			count++;
-		i++;
-	}
-	return (count);
-}
 
 static int	parse_rgb_value(char **str)
 {
@@ -34,8 +18,7 @@ static int	parse_rgb_value(char **str)
 	int		count;
 	char	*s;
 
-	s = *str;
-	s = skip_spaces(s);
+	s = skip_spaces(*str);
 	if (!ft_isdigit(*s))
 		return (-1);
 	val = 0;
@@ -57,10 +40,15 @@ static int	parse_color(char *line, int color_arr[3])
 {
 	char	*s;
 	int		i;
+	int		commas;
 
-	s = line + 1;
-	s = skip_spaces(s);
-	if (count_commas(s) != 2)
+	s = skip_spaces(line + 1);
+	commas = 0;
+	i = -1;
+	while (s[++i])
+		if (s[i] == ',')
+			commas++;
+	if (commas != 2)
 		return (0);
 	i = 0;
 	while (i < 3)
@@ -68,105 +56,53 @@ static int	parse_color(char *line, int color_arr[3])
 		color_arr[i] = parse_rgb_value(&s);
 		if (color_arr[i] < 0 || color_arr[i] > 255)
 			return (0);
-		if (i < 2)
-		{
-			if (*s != ',')
-				return (0);
+		if (i < 2 && *s != ',')
+			return (0);
+		if (i < 2 && *s == ',')
 			s++;
-		}
 		i++;
 	}
-	if (*s != '\0' && *s != '\n' && *s != '\r')
-		return (0);
+	return (*s == '\0' || *s == '\n' || *s == '\r');
+}
+
+static int	set_color(int color[3], int *hex, int *has, char *s)
+{
+	if (*has || !parse_color(s, color))
+		return (-1);
+	*has = 1;
+	*hex = (color[0] << 16) | (color[1] << 8) | color[2];
 	return (1);
 }
 
-static int	parse_texture(char *line, char **path_dst)
+static int	parse_tex_config(t_game *game, char *s)
 {
-	char	*s;
-	int		len;
-
-	if (*path_dst)
-		return (0);
-	s = line + 2;
-	s = skip_spaces(s);
-	if (*s == '\0' || *s == '\n' || *s == '\r')
-		return (0);
-	len = ft_strlen(s);
-	if (len > 0 && s[len - 1] == '\n')
-		len--;
-	if (len > 0 && s[len - 1] == '\r')
-		len--;
-	while (len > 0 && (s[len - 1] == ' ' || s[len - 1] == '\t'))
-		len--;
-	*path_dst = ft_substr(s, 0, len);
-	if (!*path_dst)
-		return (0);
-	return (1);
+	if (!ft_strncmp(s, "NO ", 3) || !ft_strncmp(s, "NO\t", 3))
+		return (parse_texture(s + 2, &game->tex.no_path));
+	if (!ft_strncmp(s, "SO ", 3) || !ft_strncmp(s, "SO\t", 3))
+		return (parse_texture(s + 2, &game->tex.so_path));
+	if (!ft_strncmp(s, "WE ", 3) || !ft_strncmp(s, "WE\t", 3))
+		return (parse_texture(s + 2, &game->tex.we_path));
+	if (!ft_strncmp(s, "EA ", 3) || !ft_strncmp(s, "EA\t", 3))
+		return (parse_texture(s + 2, &game->tex.ea_path));
+	return (0);
 }
 
 int	parse_config_line(t_game *game, char *line)
 {
-	char	*trimmed;
+	char	*s;
+	int		res;
 
-	trimmed = skip_spaces(line);
-	if (*trimmed == '\0' || *trimmed == '\n' || *trimmed == '\r')
+	s = skip_spaces(line);
+	if (*s == '\0' || *s == '\n' || *s == '\r')
 		return (0);
-	if (ft_strncmp(trimmed, "NO ", 3) == 0 || ft_strncmp(trimmed, "NO\t", 3) == 0)
-	{
-		if (!parse_texture(trimmed, &game->tex.no_path))
-			return (-1);
-		return (1);
-	}
-	else if (ft_strncmp(trimmed, "SO ", 3) == 0 || ft_strncmp(trimmed, "SO\t", 3) == 0)
-	{
-		if (!parse_texture(trimmed, &game->tex.so_path))
-			return (-1);
-		return (1);
-	}
-	else if (ft_strncmp(trimmed, "WE ", 3) == 0 || ft_strncmp(trimmed, "WE\t", 3) == 0)
-	{
-		if (!parse_texture(trimmed, &game->tex.we_path))
-			return (-1);
-		return (1);
-	}
-	else if (ft_strncmp(trimmed, "EA ", 3) == 0 || ft_strncmp(trimmed, "EA\t", 3) == 0)
-	{
-		if (!parse_texture(trimmed, &game->tex.ea_path))
-			return (-1);
-		return (1);
-	}
-	else if (ft_strncmp(trimmed, "F ", 2) == 0 || ft_strncmp(trimmed, "F\t", 2) == 0)
-	{
-		if (game->map.has_floor)
-			return (-1);
-		if (!parse_color(trimmed, game->map.floor_color))
-			return (-1);
-		game->map.has_floor = 1;
-		game->map.floor_hex = (game->map.floor_color[0] << 16)
-			| (game->map.floor_color[1] << 8) | game->map.floor_color[2];
-		return (1);
-	}
-	else if (ft_strncmp(trimmed, "C ", 2) == 0 || ft_strncmp(trimmed, "C\t", 2) == 0)
-	{
-		if (game->map.has_ceil)
-			return (-1);
-		if (!parse_color(trimmed, game->map.ceil_color))
-			return (-1);
-		game->map.has_ceil = 1;
-		game->map.ceil_hex = (game->map.ceil_color[0] << 16)
-			| (game->map.ceil_color[1] << 8) | game->map.ceil_color[2];
-		return (1);
-	}
+	res = parse_tex_config(game, s);
+	if (res != 0)
+		return (res);
+	if (!ft_strncmp(s, "F ", 2) || !ft_strncmp(s, "F\t", 2))
+		return (set_color(game->map.floor_color, &game->map.floor_hex,
+				&game->map.has_floor, s));
+	if (!ft_strncmp(s, "C ", 2) || !ft_strncmp(s, "C\t", 2))
+		return (set_color(game->map.ceil_color, &game->map.ceil_hex,
+				&game->map.has_ceil, s));
 	return (-1);
-}
-
-int	is_config_complete(t_game *game)
-{
-	return (game->tex.no_path != NULL
-		&& game->tex.so_path != NULL
-		&& game->tex.we_path != NULL
-		&& game->tex.ea_path != NULL
-		&& game->map.has_floor
-		&& game->map.has_ceil);
 }

@@ -6,14 +6,13 @@
 /*   By: mwei <mwei@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/20 17:16:20 by mwei              #+#    #+#             */
-/*   Updated: 2026/08/20 17:16:20 by mwei             ###   ########.fr       */
+/*   Updated: 2026/09/14 16:30:00 by mwei             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../include/cub3d.h"
 #include <unistd.h>
 #include <stdio.h>
-
 
 int	main(int argc, char **argv)
 {

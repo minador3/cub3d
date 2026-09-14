@@ -2,8 +2,10 @@
 
 void	my_mlx_pixel_put(t_img *img, int x, int y, int colour)
 {
-	int offset;
+	int	offset;
 
+	if (x < 0 || x >= img->w || y < 0 || y >= img->h)
+		return ;
 	offset = (y * img->line_len) + (x * (img->bpp / 8));
 	*(unsigned int *)(img->addr + offset) = colour;
 }
@@ -39,21 +41,48 @@ void	paint_ceiling_floor(t_game *game)
 
 t_img	*select_texture(t_ray *ray, t_tex *tex)
 {
-	if (ray->side == 0 && ray->step_x > 0)
+	if (ray->side == 0)
+	{
+		if (ray->step_x > 0)
+			return (&tex->ea_img);
 		return (&tex->we_img);
-	else if (ray->side == 0)
-		return (&tex->ea_img);
-	else if (ray->step_y > 0)
-		return (&tex->no_img);
+	}
 	else
-		return (&tex->so_img);
+	{
+		if (ray->step_y > 0)
+			return (&tex->so_img);
+		return (&tex->no_img);
+	}
+}
+
+static void	draw_slice(t_game *game, int x, t_wall *wall, t_img *tex)
+{
+	int		y;
+	int		tex_y;
+	double	step;
+	double	tex_pos;
+
+	step = 1.0 * tex->h / wall->line_height;
+	tex_pos = (wall->draw_start - game->screen.h / 2.0
+			+ wall->line_height / 2.0) * step;
+	y = wall->draw_start;
+	while (y <= wall->draw_end)
+	{
+		tex_y = (int)tex_pos;
+		if (tex_y < 0)
+			tex_y = 0;
+		if (tex_y >= tex->h)
+			tex_y = tex->h - 1;
+		tex_pos += step;
+		my_mlx_pixel_put(&game->screen, x, y,
+			*(unsigned int *)(tex->addr + (tex_y * tex->line_len)
+				+ (wall->tex_x * (tex->bpp / 8))));
+		y++;
+	}
 }
 
 void	paint_wall_column(t_game *game, int x, t_ray *ray, t_wall *wall)
 {
-	int		y;
-	int		tex_y;
-	int		color;
 	t_img	*tex;
 
 	if (ray->side == 0)
@@ -63,36 +92,14 @@ void	paint_wall_column(t_game *game, int x, t_ray *ray, t_wall *wall)
 	wall->wall_x -= floor(wall->wall_x);
 	tex = select_texture(ray, &game->tex);
 	wall->tex_x = (int)(wall->wall_x * tex->w);
-	y = wall->draw_start;
-	while (y <= wall->draw_end)
-	{
-		tex_y = ((y - wall->draw_start) * tex->h) / wall->line_height;
-		color = *(unsigned int *)(tex->addr + (tex_y * tex->line_len)
-				+ ((int)wall->tex_x * (tex->bpp / 8)));
-		my_mlx_pixel_put(&game->screen, x, y, color);
-		y++;
-	}
-}
-
-void	render_walls(t_game *game)
-{
-	int		x;
-	double	camera_x;
-	t_ray	ray;
-	t_wall	wall;
-
-	x = 0;
-	while (x < game->screen.w)
-	{
-		camera_x = 2 * ((double)x / game->screen.w) - 1;
-		ray.ray_dir_x = game->player.dir_x + camera_x * game->player.plane_x;
-		ray.ray_dir_y = game->player.dir_y + camera_x * game->player.plane_y;
-		ray.map_x = (int)game->player.x;
-		ray.map_y = (int)game->player.y;
-		init_dda(&game->player, &ray);
-		dda_loop(&ray, game->map.grid);
-		calc_wall_height(&ray, &wall, game->screen.h);
-		paint_wall_column(game, x, &ray, &wall);
-		x++;
-	}
+	if ((ray->side == 0 && ray->ray_dir_x < 0)
+		|| (ray->side == 1 && ray->ray_dir_y > 0))
+		wall->tex_x = tex->w - wall->tex_x - 1;
+	if (wall->tex_x < 0)
+		wall->tex_x = 0;
+	if (wall->tex_x >= tex->w)
+		wall->tex_x = tex->w - 1;
+	if (wall->line_height <= 0)
+		wall->line_height = 1;
+	draw_slice(game, x, wall, tex);
 }

@@ -15,8 +15,6 @@
 int	close_game(t_game *game)
 {
 	cleanup_game(game);
-	mlx_destroy_image(game->mlx, game->screen.ptr);
-	mlx_destroy_window(game->mlx, game->win);
 	exit(0);
 }
 
@@ -28,19 +26,18 @@ void	error_exit(char *msg)
 	exit(1);
 }
 
-void	free_map(char **map)
+static void	cleanup_textures(t_game *game)
 {
-	int	i;
-
-	if (!map)
-		return ;
-	i = 0;
-	while (map[i])
-	{
-		free(map[i]);
-		i++;
-	}
-	free(map);
+	if (game->tex.no_img.ptr)
+		mlx_destroy_image(game->mlx, game->tex.no_img.ptr);
+	if (game->tex.so_img.ptr)
+		mlx_destroy_image(game->mlx, game->tex.so_img.ptr);
+	if (game->tex.we_img.ptr)
+		mlx_destroy_image(game->mlx, game->tex.we_img.ptr);
+	if (game->tex.ea_img.ptr)
+		mlx_destroy_image(game->mlx, game->tex.ea_img.ptr);
+	if (game->screen.ptr)
+		mlx_destroy_image(game->mlx, game->screen.ptr);
 }
 
 void	cleanup_game(t_game *game)
@@ -48,31 +45,25 @@ void	cleanup_game(t_game *game)
 	if (!game)
 		return ;
 	if (game->map.grid)
-	{
 		free_map(game->map.grid);
-		game->map.grid = NULL;
-	}
-	if (game->tex.no_path)
+	game->map.grid = NULL;
+	free(game->tex.no_path);
+	game->tex.no_path = NULL;
+	free(game->tex.so_path);
+	game->tex.so_path = NULL;
+	free(game->tex.we_path);
+	game->tex.we_path = NULL;
+	free(game->tex.ea_path);
+	game->tex.ea_path = NULL;
+	if (game->mlx)
 	{
-		free(game->tex.no_path);
-		game->tex.no_path = NULL;
+		cleanup_textures(game);
+		if (game->win)
+			mlx_destroy_window(game->mlx, game->win);
+		mlx_destroy_display(game->mlx);
+		free(game->mlx);
+		game->mlx = NULL;
 	}
-	if (game->tex.so_path)
-	{
-		free(game->tex.so_path);
-		game->tex.so_path = NULL;
-	}
-	if (game->tex.we_path)
-	{
-		free(game->tex.we_path);
-		game->tex.we_path = NULL;
-	}
-	if (game->tex.ea_path)
-	{
-		free(game->tex.ea_path);
-		game->tex.ea_path = NULL;
-	}
-	// Note: Teammate B will add MLX image and window destroying logic here.
 }
 
 void	error_exit_game(t_game *game, char *msg)

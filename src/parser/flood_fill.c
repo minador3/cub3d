@@ -6,7 +6,7 @@
 /*   By: mwei <mwei@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/20 17:16:00 by mwei              #+#    #+#             */
-/*   Updated: 2026/08/20 17:16:00 by mwei             ###   ########.fr       */
+/*   Updated: 2026/09/14 16:30:00 by mwei             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,7 @@ static char	**duplicate_map(t_game *game)
 	char	**temp;
 	int		y;
 
-	temp = malloc(sizeof(char *) * (game->map.h + 1));
+	temp = ft_calloc(game->map.h + 1, sizeof(char *));
 	if (!temp)
 		error_exit_game(game, "Memory allocation failed in flood fill.");
 	y = 0;
@@ -35,25 +35,24 @@ static char	**duplicate_map(t_game *game)
 	return (temp);
 }
 
-static void	flood_check(char **grid, int x, int y, int height, int width, int *leak)
+static int	flood_check(t_game *game, char **grid, int x, int y)
 {
-	if (x < 0 || x >= width || y < 0 || y >= height)
-	{
-		*leak = 1;
-		return ;
-	}
+	if (x < 0 || x >= game->map.w || y < 0 || y >= game->map.h)
+		return (1);
 	if (grid[y][x] == ' ')
-	{
-		*leak = 1;
-		return ;
-	}
+		return (1);
 	if (grid[y][x] == '1' || grid[y][x] == 'V')
-		return ;
+		return (0);
 	grid[y][x] = 'V';
-	flood_check(grid, x + 1, y, height, width, leak);
-	flood_check(grid, x - 1, y, height, width, leak);
-	flood_check(grid, x, y + 1, height, width, leak);
-	flood_check(grid, x, y - 1, height, width, leak);
+	if (flood_check(game, grid, x + 1, y))
+		return (1);
+	if (flood_check(game, grid, x - 1, y))
+		return (1);
+	if (flood_check(game, grid, x, y + 1))
+		return (1);
+	if (flood_check(game, grid, x, y - 1))
+		return (1);
+	return (0);
 }
 
 void	check_map_enclosure(t_game *game)
@@ -61,25 +60,18 @@ void	check_map_enclosure(t_game *game)
 	char	**temp;
 	int		x;
 	int		y;
-	int		leak;
 
 	temp = duplicate_map(game);
-	leak = 0;
 	y = 0;
 	while (y < game->map.h)
 	{
 		x = 0;
 		while (x < game->map.w)
 		{
-			if (temp[y][x] == '0' || temp[y][x] == 'N' || temp[y][x] == 'S'
-				|| temp[y][x] == 'E' || temp[y][x] == 'W')
+			if (temp[y][x] == '0' && flood_check(game, temp, x, y))
 			{
-				flood_check(temp, x, y, game->map.h, game->map.w, &leak);
-				if (leak)
-				{
-					free_map(temp);
-					error_exit_game(game, "Map is not enclosed by walls.");
-				}
+				free_map(temp);
+				error_exit_game(game, "Map is not enclosed by walls.");
 			}
 			x++;
 		}

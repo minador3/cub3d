@@ -1,5 +1,37 @@
 #include "cub3d.h"
 
+static int	is_walkable(t_game *game, double x, double y)
+{
+	int	map_x;
+	int	map_y;
+
+	map_x = (int)x;
+	map_y = (int)y;
+	if (map_x < 0 || map_x >= game->map.w
+		|| map_y < 0 || map_y >= game->map.h)
+		return (0);
+	if (game->map.grid[map_y][map_x] == '1'
+		|| game->map.grid[map_y][map_x] == ' ')
+		return (0);
+	return (1);
+}
+
+static int	can_move_to(t_game *game, double new_x, double new_y)
+{
+	double	margin;
+
+	margin = 0.2;
+	if (!is_walkable(game, new_x - margin, new_y - margin))
+		return (0);
+	if (!is_walkable(game, new_x + margin, new_y - margin))
+		return (0);
+	if (!is_walkable(game, new_x - margin, new_y + margin))
+		return (0);
+	if (!is_walkable(game, new_x + margin, new_y + margin))
+		return (0);
+	return (1);
+}
+
 void	move_forward(t_game *game, double speed)
 {
 	double	new_x;
@@ -7,23 +39,15 @@ void	move_forward(t_game *game, double speed)
 
 	new_x = game->player.x + game->player.dir_x * speed;
 	new_y = game->player.y + game->player.dir_y * speed;
-	if (game->map.grid[(int)game->player.y][(int)new_x] != '1')
+	if (can_move_to(game, new_x, game->player.y))
 		game->player.x = new_x;
-	if (game->map.grid[(int)new_y][(int)game->player.x] != '1')
+	if (can_move_to(game, game->player.x, new_y))
 		game->player.y = new_y;
 }
 
 void	move_backward(t_game *game, double speed)
 {
-	double	new_x;
-	double	new_y;
-
-	new_x = game->player.x - game->player.dir_x * speed;
-	new_y = game->player.y - game->player.dir_y * speed;
-	if (game->map.grid[(int)game->player.y][(int)new_x] != '1')
-		game->player.x = new_x;
-	if (game->map.grid[(int)new_y][(int)game->player.x] != '1')
-		game->player.y = new_y;
+	move_forward(game, -speed);
 }
 
 void	strafe_right(t_game *game, double speed)
@@ -31,40 +55,10 @@ void	strafe_right(t_game *game, double speed)
 	double	new_x;
 	double	new_y;
 
-	new_x = game->player.x + game->player.plane_x * speed;
-	new_y = game->player.y + game->player.plane_y * speed;
-	if (game->map.grid[(int)game->player.y][(int)new_x] != '1')
+	new_x = game->player.x - game->player.dir_y * speed;
+	new_y = game->player.y + game->player.dir_x * speed;
+	if (can_move_to(game, new_x, game->player.y))
 		game->player.x = new_x;
-	if (game->map.grid[(int)new_y][(int)game->player.x] != '1')
+	if (can_move_to(game, game->player.x, new_y))
 		game->player.y = new_y;
-}
-
-void	strafe_left(t_game *game, double speed)
-{
-	double	new_x;
-	double	new_y;
-
-	new_x = game->player.x - game->player.plane_x * speed;
-	new_y = game->player.y - game->player.plane_y * speed;
-	if (game->map.grid[(int)game->player.y][(int)new_x] != '1')
-		game->player.x = new_x;
-	if (game->map.grid[(int)new_y][(int)game->player.x] != '1')
-		game->player.y = new_y;
-}
-
-void	rotate_player(t_game *game, double theta)
-{
-	double	old_dir_x;
-	double	old_plane_x;
-
-	old_dir_x = game->player.dir_x;
-	game->player.dir_x = old_dir_x
-		* cos(theta) - game->player.dir_y * sin(theta);
-	game->player.dir_y = old_dir_x
-		* sin(theta) + game->player.dir_y * cos(theta);
-	old_plane_x = game->player.plane_x;
-	game->player.plane_x = old_plane_x
-		* cos(theta) - game->player.plane_y * sin(theta);
-	game->player.plane_y = old_plane_x
-		* sin(theta) + game->player.plane_y * cos(theta);
 }
