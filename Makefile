@@ -40,7 +40,7 @@ $(NAME): $(LIBFT) $(MLX) $(OBJ)
 	@$(CC) -no-pie $(CFLAGS) $(OBJ) $(LFLAGS) -o $(NAME)
 	@echo "Done Making $(NAME)"
 
-$(OBJ_DIR)/%.o: %.c
+$(OBJ_DIR)/%.o: %.c include/cub3d.h
 	@mkdir -p $(dir $@)
 	@$(CC) $(CFLAGS) -c $< -o $@
 

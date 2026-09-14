@@ -6,7 +6,7 @@
 /*   By: mwei <mwei@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/20 17:15:00 by mwei              #+#    #+#             */
-/*   Updated: 2026/08/20 17:15:00 by mwei             ###   ########.fr       */
+/*   Updated: 2026/09/14 16:30:00 by mwei             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -95,8 +95,7 @@ typedef struct s_wall
 	int		draw_start;
 	int		draw_end;
 	double	wall_x;
-	double	tex_x;
-	double	tex_y;
+	int		tex_x;
 }			t_wall;
 
 typedef struct s_keys
@@ -138,9 +137,10 @@ void	check_map_enclosure(t_game *game);
 int		is_empty_line(char *line);
 char	*skip_spaces(char *str);
 void	consume_file(int fd);
+int		parse_texture(char *s, char **path_dst);
 
 void	init_dda(t_player *player, t_ray *ray);
-void	dda_loop(t_ray *ray, char **grid);
+void	dda_loop(t_ray *ray, t_game *game);
 void	calc_wall_height(t_ray *ray, t_wall *wall, int screen_height);
 
 void	init_window(t_game *game);
@@ -151,19 +151,18 @@ void	paint_wall_column(t_game *game, int x, t_ray *ray, t_wall *wall);
 t_img	*select_texture(t_ray *ray, t_tex *tex);
 
 void	load_one_texture(t_game *game, char *path, t_img *tex_img);
-void    load_all_textures(t_game *game);
-int	game_loop(t_game *game);
+void	load_all_textures(t_game *game);
+int		game_loop(t_game *game);
 
-int	close_game(t_game *game);
+int		close_game(t_game *game);
 void	move_forward(t_game *game, double speed);
 void	move_backward(t_game *game, double speed);
 void	strafe_right(t_game *game, double speed);
 void	strafe_left(t_game *game, double speed);
 void	rotate_player(t_game *game, double theta);
 
-int	handle_keypress(int keycode, t_game *game);
-int	handle_keyrelease(int keycode, t_game *game);
+int		handle_keypress(int keycode, t_game *game);
+int		handle_keyrelease(int keycode, t_game *game);
 void	process_movement(t_game *game);
-
 
 #endif
